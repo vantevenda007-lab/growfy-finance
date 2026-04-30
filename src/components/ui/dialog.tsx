@@ -33,7 +33,7 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed right-0 top-0 z-50 h-full w-full max-w-xl border-l border-border glass-elevated',
+        'fixed right-0 top-0 z-50 flex h-full w-full max-w-xl flex-col border-l border-border glass-elevated',
         'data-[state=open]:animate-in data-[state=open]:slide-in-from-right',
         'data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right',
         'duration-300 ease-out-expo',
@@ -52,7 +52,7 @@ export const DialogContent = forwardRef<
 DialogContent.displayName = 'DialogContent';
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col gap-1.5 p-6 pb-4 border-b border-border', className)} {...props} />
+  <div className={cn('flex shrink-0 flex-col gap-1.5 p-6 pb-4 border-b border-border', className)} {...props} />
 );
 
 export const DialogTitle = forwardRef<
