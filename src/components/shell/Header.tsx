@@ -1,7 +1,8 @@
-import { Bell, BellOff, Command, Download, LogOut, Moon, RotateCcw, Search, Sun, Upload } from 'lucide-react';
+import { Bell, BellOff, BellRing, Command, Download, LogOut, Moon, RotateCcw, Search, Sun, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  fireTestNotification,
   getNotificationPermission,
   requestNotificationPermission,
   type NotificationPermissionState,
@@ -253,6 +254,76 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
                       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Conta</p>
                       <p className="text-xs font-medium mt-1 truncate">{userEmail ?? 'agência@growfy.io'}</p>
                     </div>
+
+                    <div className="p-3 border-b border-border/60 space-y-2">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Notificações
+                      </p>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground">Status</span>
+                        <span
+                          className={cn(
+                            'tabular',
+                            permission === 'granted' && 'text-accent',
+                            permission === 'denied' && 'text-destructive',
+                            permission === 'unsupported' && 'text-muted-foreground',
+                            permission === 'default' && 'text-warning',
+                          )}
+                        >
+                          {permission === 'granted' && 'Ativadas'}
+                          {permission === 'denied' && 'Bloqueadas'}
+                          {permission === 'default' && 'Não pedido'}
+                          {permission === 'unsupported' && 'Sem suporte'}
+                        </span>
+                      </div>
+                      {permission === 'granted' && (
+                        <button
+                          onClick={() => {
+                            const ok = fireTestNotification();
+                            if (ok) {
+                              toast('Notificação de teste enviada', {
+                                description: 'Confira o canto da tela.',
+                                tone: 'success',
+                              });
+                            } else {
+                              toast('Falha ao enviar', {
+                                description: 'Verifique as permissões do navegador.',
+                                tone: 'error',
+                              });
+                            }
+                          }}
+                          className="flex w-full items-center gap-2 px-2 py-1.5 -mx-1 rounded text-[11px] hover:bg-secondary/60 transition-colors"
+                        >
+                          <BellRing className="h-3 w-3 text-accent" />
+                          Testar notificação
+                        </button>
+                      )}
+                      {permission === 'default' && (
+                        <button
+                          onClick={async () => {
+                            const result = await requestNotificationPermission();
+                            setPermission(result);
+                            if (result === 'granted') {
+                              toast('Notificações ativadas', {
+                                description: 'Você será avisado das reuniões.',
+                                tone: 'success',
+                              });
+                              fireTestNotification();
+                            }
+                          }}
+                          className="flex w-full items-center gap-2 px-2 py-1.5 -mx-1 rounded text-[11px] hover:bg-secondary/60 transition-colors"
+                        >
+                          <Bell className="h-3 w-3 text-muted-foreground" />
+                          Ativar notificações
+                        </button>
+                      )}
+                      {permission === 'denied' && (
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          Bloqueado pelo navegador. Clique no cadeado da barra → Notificações → Permitir → recarregue a página.
+                        </p>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => {
                         setProfileOpen(false);

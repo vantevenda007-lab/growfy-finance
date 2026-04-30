@@ -39,7 +39,14 @@ export function useEventReminders(): void {
     }
 
     tick();
-    const handle = window.setInterval(tick, 60_000);
-    return () => window.clearInterval(handle);
+    const handle = window.setInterval(tick, 30_000);
+    function onVisibility(): void {
+      if (document.visibilityState === 'visible') tick();
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(handle);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [events]);
 }

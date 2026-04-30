@@ -112,3 +112,27 @@ export const REMINDER_PRESETS: { label: string; value: number }[] = [
   { label: '1 hora antes', value: 60 },
   { label: '1 dia antes', value: 1440 },
 ];
+
+/** Send a test notification so users can verify the system works. */
+export function fireTestNotification(): boolean {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+  try {
+    const n = new Notification('🚀 Growfy Finance', {
+      body: 'Notificações ativadas. Você será avisado dos seus compromissos.',
+      tag: 'growfy-test',
+      icon: '/favicon.svg',
+    });
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Reset the notified store so events can be re-notified (debug helper). */
+export function resetNotifiedStore(): void {
+  localStorage.removeItem(NOTIFIED_KEY);
+}
