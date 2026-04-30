@@ -112,11 +112,12 @@ export function CRM() {
   }, [clients]);
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="space-y-5">
+      <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight leading-tight">CRM</h1>
-          <p className="text-[12px] text-muted-foreground">Pipeline de leads e base de clientes.</p>
+          <p className="t-eyebrow mb-1.5">Comercial</p>
+          <h1 className="t-page-title">CRM</h1>
+          <p className="t-lead mt-1.5">Pipeline de leads e base de clientes.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center rounded-md border border-border bg-card p-0.5">

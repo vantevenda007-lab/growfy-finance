@@ -68,7 +68,9 @@
 
   body {
     @apply bg-background text-foreground font-body;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
+    font-optical-sizing: auto;
+    letter-spacing: -0.005em;
     background:
       radial-gradient(ellipse 60% 40% at 50% 0%, hsl(var(--cosmos-glow) / 0.08) 0%, transparent 65%),
       radial-gradient(ellipse 40% 30% at 100% 100%, hsl(220 60% 30% / 0.05) 0%, transparent 65%),
@@ -145,14 +147,60 @@
   /* Number ticker style */
   .tabular {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
+    font-feature-settings: 'tnum', 'cv11', 'ss01';
+    letter-spacing: -0.012em;
   }
 
   /* Brand wordmark — Instrument Serif */
   .font-brand {
     font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
     font-weight: 400;
-    font-feature-settings: 'liga';
+    font-feature-settings: 'liga', 'dlig';
+    font-optical-sizing: auto;
+  }
+
+  /* ─── Typography system ─── */
+
+  /* Eyebrow — uppercase label above titles */
+  .t-eyebrow {
+    @apply text-[10px] uppercase text-muted-foreground;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+  }
+
+  .t-eyebrow-lg {
+    @apply text-[11px] uppercase text-muted-foreground;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+  }
+
+  /* Page title — editorial serif, big */
+  .t-page-title {
+    @apply font-brand text-[44px] leading-[0.95] capitalize;
+    letter-spacing: -0.025em;
+  }
+
+  /* Section heading — sans, medium */
+  .t-section {
+    @apply font-display text-base font-semibold;
+    letter-spacing: -0.015em;
+  }
+
+  /* Lead paragraph — slightly larger body */
+  .t-lead {
+    @apply text-[13.5px] leading-relaxed text-muted-foreground;
+  }
+
+  /* Stat label — small uppercase eyebrow above stat number */
+  .t-stat-label {
+    @apply text-[9px] uppercase text-muted-foreground;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+  }
+
+  /* Stat value — display number with tnum */
+  .t-stat-value {
+    @apply font-display tabular tracking-tight font-semibold;
   }
 
   /* Text gradient */

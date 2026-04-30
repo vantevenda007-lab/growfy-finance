@@ -1,6 +1,11 @@
-import { Bell, Command, Download, LogOut, Moon, RotateCcw, Search, Sun, Upload } from 'lucide-react';
+import { Bell, BellOff, Command, Download, LogOut, Moon, RotateCcw, Search, Sun, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  type NotificationPermissionState,
+} from '@/lib/notifications';
 import { Logo } from './Logo';
 import { PeriodSelector } from './PeriodSelector';
 import { Button } from '@/components/ui/button';
@@ -8,6 +13,7 @@ import { useStore } from '@/stores/useStore';
 import { exportBackup, importBackup, type BackupBundle } from '@/lib/db';
 import { toast } from './Toaster';
 import { buildAlerts } from '@/lib/selectors';
+import { cn } from '@/lib/utils';
 import type { TabKey } from './SidebarNav';
 
 const TAB_BREADCRUMB: Record<TabKey, string> = {
@@ -35,6 +41,41 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [permission, setPermission] = useState<NotificationPermissionState>(() =>
+    getNotificationPermission(),
+  );
+
+  async function onToggleNotifications(): Promise<void> {
+    if (permission === 'unsupported') {
+      toast('Sem suporte', {
+        description: 'Este navegador não suporta notificações.',
+        tone: 'warning',
+      });
+      return;
+    }
+    if (permission === 'granted') {
+      toast('Notificações ativas', {
+        description: 'Para desativar, gerencie pelo cadeado da barra do navegador.',
+        tone: 'info',
+      });
+      return;
+    }
+    if (permission === 'denied') {
+      toast('Bloqueado pelo navegador', {
+        description: 'Permita pelo cadeado da barra para receber lembretes.',
+        tone: 'warning',
+      });
+      return;
+    }
+    const result = await requestNotificationPermission();
+    setPermission(result);
+    if (result === 'granted') {
+      toast('Notificações ativadas', {
+        description: 'Você será avisado das reuniões.',
+        tone: 'success',
+      });
+    }
+  }
 
   useEffect(() => {
     if (!profileOpen) return undefined;
@@ -142,10 +183,23 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
 
             <div className="flex items-center gap-0.5">
               <button
+                onClick={onToggleNotifications}
                 className="relative h-8 w-8 rounded-md hover:bg-secondary/60 transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
-                title="Alertas"
+                title={
+                  permission === 'granted'
+                    ? `Notificações ativas · ${alertCount} alerta${alertCount === 1 ? '' : 's'}`
+                    : permission === 'denied'
+                    ? 'Notificações bloqueadas'
+                    : permission === 'unsupported'
+                    ? 'Notificações sem suporte neste navegador'
+                    : 'Ativar notificações'
+                }
               >
-                <Bell className="h-4 w-4" />
+                {permission === 'denied' || permission === 'unsupported' ? (
+                  <BellOff className="h-4 w-4" />
+                ) : (
+                  <Bell className={cn('h-4 w-4', permission === 'granted' && 'text-accent')} />
+                )}
                 {alertCount > 0 && (
                   <span className="absolute top-0.5 right-0.5 flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-destructive text-[9px] tabular text-white font-medium px-1">
                     {alertCount}

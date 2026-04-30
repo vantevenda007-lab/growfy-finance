@@ -18,6 +18,7 @@ import { Receivables } from '@/pages/Receivables';
 import { Payables } from '@/pages/Payables';
 import { CashFlow } from '@/pages/CashFlow';
 import { useStore } from '@/stores/useStore';
+import { useEventReminders } from '@/hooks/useEventReminders';
 
 const PAGE_TRANSITION = {
   initial: { opacity: 0, y: 12 },
@@ -60,6 +61,8 @@ function App() {
     }
     return undefined;
   }, [hydrated]);
+
+  useEventReminders();
 
   function handleAuthenticated(email: string): void {
     const session: AuthSession = { email, signedInAt: new Date().toISOString() };

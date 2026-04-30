@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/stores/useStore';
 import { uid } from '@/lib/utils';
+import {
+  REMINDER_PRESETS,
+  getNotificationPermission,
+  requestNotificationPermission,
+} from '@/lib/notifications';
+import { toast } from '@/components/shell/Toaster';
 import type { CalendarEvent, CalendarEventType, CalendarEventPriority } from '@/types';
 
 interface EventFormProps {
@@ -27,6 +33,7 @@ interface FormValues {
   priority: CalendarEventPriority;
   location: string;
   clientId: string;
+  reminderMinutes: number;
 }
 
 export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFormProps) {
@@ -43,6 +50,7 @@ export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFor
       priority: initial?.priority ?? 'medium',
       location: initial?.location ?? '',
       clientId: initial?.clientId ?? '',
+      reminderMinutes: initial?.reminderMinutes ?? 10,
     },
   });
 
@@ -58,6 +66,7 @@ export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFor
       setValue('priority', initial.priority);
       setValue('location', initial.location ?? '');
       setValue('clientId', initial.clientId ?? '');
+      setValue('reminderMinutes', initial.reminderMinutes ?? 0);
     }
   }, [initial, setValue]);
 
@@ -65,8 +74,27 @@ export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFor
   const type = watch('type');
   const priority = watch('priority');
   const clientId = watch('clientId');
+  const reminderMinutes = watch('reminderMinutes');
 
-  function submit(values: FormValues): void {
+  async function ensurePermission(): Promise<void> {
+    if (reminderMinutes > 0 && getNotificationPermission() === 'default') {
+      const result = await requestNotificationPermission();
+      if (result === 'granted') {
+        toast('Notificações ativadas', {
+          description: 'Você será avisado pelo navegador.',
+          tone: 'success',
+        });
+      } else if (result === 'denied') {
+        toast('Notificações bloqueadas', {
+          description: 'Permita pelo cadeado da barra do navegador para receber lembretes.',
+          tone: 'warning',
+        });
+      }
+    }
+  }
+
+  async function submit(values: FormValues): Promise<void> {
+    await ensurePermission();
     const event: CalendarEvent = {
       id: initial?.id ?? uid('evt'),
       title: values.title.trim(),
@@ -79,6 +107,7 @@ export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFor
       priority: values.priority,
       location: values.location.trim() || undefined,
       clientId: values.clientId || undefined,
+      reminderMinutes: values.reminderMinutes > 0 ? values.reminderMinutes : undefined,
       completed: initial?.completed ?? false,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
@@ -182,6 +211,28 @@ export function EventForm({ initial, defaultDate, onSubmit, onCancel }: EventFor
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div>
+          <Label>Lembrete</Label>
+          <Select
+            value={String(reminderMinutes)}
+            onValueChange={(v) => setValue('reminderMinutes', Number(v))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {REMINDER_PRESETS.map((p) => (
+                <SelectItem key={p.value} value={String(p.value)}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground mt-1.5">
+            Notificação aparece no navegador no horário selecionado.
+          </p>
         </div>
 
         <div>

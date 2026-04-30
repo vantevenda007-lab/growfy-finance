@@ -196,12 +196,9 @@ export function Calendar() {
       {/* Header */}
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground mb-1.5">
-            Agenda
-          </p>
-          <h1 className="font-brand text-[44px] leading-[0.95] tracking-tight capitalize">
-            {monthLabel}
-          </h1>
+          <p className="t-eyebrow mb-1.5">Agenda</p>
+          <h1 className="t-page-title">{monthLabel}</h1>
+          <p className="t-lead mt-1.5">Compromissos, reuniões e prazos do mês.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center rounded-md border border-border bg-card/40">

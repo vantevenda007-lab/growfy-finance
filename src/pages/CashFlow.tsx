@@ -62,12 +62,13 @@ export function CashFlow() {
   }, [selectedMonth, receivables, payables]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header>
-        <h1 className="font-display text-display-md tracking-tight">
-          Fluxo de Caixa · <span className="text-gradient-accent capitalize">{formatMonthLabel(selectedMonth)}</span>
+        <p className="t-eyebrow mb-1.5">Consolidado</p>
+        <h1 className="t-page-title">
+          Fluxo de Caixa <span className="italic text-foreground/85">· {formatMonthLabel(selectedMonth)}</span>
         </h1>
-        <p className="text-muted-foreground">Visão consolidada e em tempo real cruzando entradas e saídas.</p>
+        <p className="t-lead mt-1.5">Visão consolidada e em tempo real cruzando entradas e saídas.</p>
       </header>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">

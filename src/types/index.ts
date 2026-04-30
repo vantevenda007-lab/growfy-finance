@@ -89,6 +89,8 @@ export interface CalendarEvent {
   location?: string;
   clientId?: string;
   completed: boolean;
+  /** Minutes before the event to fire a browser notification. 0/undefined = no reminder. */
+  reminderMinutes?: number;
   createdAt: string;
 }
 

@@ -101,11 +101,12 @@ export function Payables() {
   const maxAmount = Math.max(...breakdown.map((b) => b.amount), 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-display-md tracking-tight">Contas a Pagar</h1>
-          <p className="text-muted-foreground"><span className="capitalize">{formatMonthLabel(selectedMonth)}</span> · {filtered.length} despesa(s)</p>
+          <p className="t-eyebrow mb-1.5">Saídas</p>
+          <h1 className="t-page-title">Contas a Pagar</h1>
+          <p className="t-lead mt-1.5"><span className="capitalize">{formatMonthLabel(selectedMonth)}</span> · {filtered.length} despesa(s)</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setImporting(true)}>
