@@ -7,10 +7,15 @@ import {
   pruneNotified,
   reminderTimeFor,
 } from '@/lib/notifications';
+import type { CalendarEvent } from '@/types';
 
 /**
- * Polls every minute and fires browser notifications for events whose reminder
- * window has just elapsed. Idempotent — keeps a localStorage set of notified IDs.
+ * Schedules browser notifications for upcoming events.
+ *
+ * Uses a precise setTimeout to the next pending reminder rather than polling,
+ * which is more reliable than setInterval (background tabs throttle intervals
+ * heavily). Also runs a sweep on visibility change so we catch up after the
+ * tab wakes from sleep.
  */
 export function useEventReminders(): void {
   const events = useStore((s) => s.events);
@@ -18,34 +23,65 @@ export function useEventReminders(): void {
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return undefined;
 
-    function tick(): void {
-      const now = new Date();
-      pruneNotified(events.map((e) => e.id));
+    let timeoutId: number | null = null;
+    let cancelled = false;
 
+    function nextPending(now: Date): { event: CalendarEvent; fireAt: Date } | null {
+      let best: { event: CalendarEvent; fireAt: Date } | null = null;
       for (const event of events) {
         if (event.completed) continue;
         if (hasBeenNotified(event.id)) continue;
-
         const fireAt = reminderTimeFor(event);
         if (!fireAt) continue;
+        // Skip events whose window has fully expired (>30 min after fireAt).
+        if (now.getTime() - fireAt.getTime() > 30 * 60_000) continue;
+        if (!best || fireAt < best.fireAt) best = { event, fireAt };
+      }
+      return best;
+    }
 
-        // Only fire if we're within the window: from fireAt up to event start time + 30 min.
+    function sweep(): void {
+      if (cancelled) return;
+      const now = new Date();
+      pruneNotified(events.map((e) => e.id));
+
+      // Fire any reminder whose window is open right now.
+      for (const event of events) {
+        if (event.completed) continue;
+        if (hasBeenNotified(event.id)) continue;
+        const fireAt = reminderTimeFor(event);
+        if (!fireAt) continue;
         if (now < fireAt) continue;
         if (now.getTime() - fireAt.getTime() > 30 * 60_000) continue;
-
-        const ok = fireEventNotification(event);
-        if (ok) markNotified(event.id);
+        if (fireEventNotification(event)) markNotified(event.id);
       }
+
+      // Schedule the next pending reminder precisely.
+      const next = nextPending(new Date());
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (!next) {
+        timeoutId = null;
+        return;
+      }
+      const delayMs = Math.max(1000, next.fireAt.getTime() - Date.now());
+      // Cap at 24h — we'll re-evaluate after.
+      const cap = Math.min(delayMs, 24 * 60 * 60_000);
+      timeoutId = window.setTimeout(sweep, cap);
     }
 
-    tick();
-    const handle = window.setInterval(tick, 30_000);
+    sweep();
     function onVisibility(): void {
-      if (document.visibilityState === 'visible') tick();
+      if (document.visibilityState === 'visible') sweep();
     }
     document.addEventListener('visibilitychange', onVisibility);
+    // Safety net: re-sweep every 5 minutes even when foregrounded, in case
+    // setTimeout was throttled while sleeping.
+    const safetyId = window.setInterval(sweep, 5 * 60_000);
+
     return () => {
-      window.clearInterval(handle);
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      window.clearInterval(safetyId);
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [events]);

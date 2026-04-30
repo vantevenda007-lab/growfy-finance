@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Bell,
   Briefcase,
   Calendar as CalendarIcon,
   Check,
@@ -146,6 +147,16 @@ export function Calendar() {
         return (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99');
       })
       .slice(0, 6);
+  }, [events]);
+
+  const upcomingReminders = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((e) => !e.completed && e.reminderMinutes)
+      .map((e) => ({ event: e, fireAt: computeFireAt(e) }))
+      .filter((r) => r.fireAt && r.fireAt > now)
+      .sort((a, b) => (a.fireAt as Date).getTime() - (b.fireAt as Date).getTime())
+      .slice(0, 4);
   }, [events]);
 
   const stats = useMemo(() => {
@@ -382,6 +393,35 @@ export function Calendar() {
             </CardContent>
           </Card>
 
+          {upcomingReminders.length > 0 && (
+            <Card className="border-accent/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bell className="h-3 w-3 text-accent" />
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-accent">
+                    Lembretes agendados
+                  </p>
+                </div>
+                <ul className="space-y-1.5">
+                  {upcomingReminders.map(({ event: ev, fireAt }) => (
+                    <li
+                      key={ev.id}
+                      className="flex items-center gap-2 text-[11px]"
+                    >
+                      <span className="tabular text-accent shrink-0 w-12">
+                        {fireAt ? formatTimeShort(fireAt) : '—'}
+                      </span>
+                      <span className="truncate flex-1">{ev.title}</span>
+                      <span className="text-muted-foreground tabular text-[10px]">
+                        {formatRelativeFireAt(fireAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -453,8 +493,11 @@ export function Calendar() {
               setCreating(false);
               setEditing(null);
               setCreateDate(null);
+              const reminderInfo = formatReminderInfo(event);
               toast(isNew ? 'Compromisso criado' : 'Compromisso atualizado', {
-                description: event.title,
+                description: reminderInfo
+                  ? `${event.title} · ${reminderInfo}`
+                  : event.title,
               });
             }}
             onCancel={() => {
@@ -619,6 +662,57 @@ function StatBlock({
       </CardContent>
     </Card>
   );
+}
+
+function formatTimeShort(d: Date): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function formatRelativeFireAt(d: Date | null): string {
+  if (!d) return '';
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const diffMin = Math.round(diffMs / 60_000);
+  if (diffMin < 1) return 'em instantes';
+  if (diffMin < 60) return `em ${diffMin}min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `em ${diffH}h`;
+  const diffD = Math.round(diffH / 24);
+  return `em ${diffD}d`;
+}
+
+function computeFireAt(event: CalendarEvent): Date | null {
+  if (!event.reminderMinutes) return null;
+  const [y, m, d] = event.date.split('-').map(Number);
+  let target: Date;
+  if (event.allDay || !event.startTime) {
+    target = new Date(y, m - 1, d, 9, 0, 0);
+  } else {
+    const [hh, mm] = event.startTime.split(':').map(Number);
+    target = new Date(y, m - 1, d, hh, mm, 0);
+  }
+  target.setMinutes(target.getMinutes() - event.reminderMinutes);
+  return target;
+}
+
+function formatReminderInfo(event: CalendarEvent): string | null {
+  if (!event.reminderMinutes) return null;
+  const [y, m, d] = event.date.split('-').map(Number);
+  let target: Date;
+  if (event.allDay || !event.startTime) {
+    target = new Date(y, m - 1, d, 9, 0, 0);
+  } else {
+    const [hh, mm] = event.startTime.split(':').map(Number);
+    target = new Date(y, m - 1, d, hh, mm, 0);
+  }
+  target.setMinutes(target.getMinutes() - event.reminderMinutes);
+  const now = new Date();
+  if (target < now) return 'lembrete já passou';
+  const sameDay = target.toDateString() === now.toDateString();
+  const time = `${String(target.getHours()).padStart(2, '0')}:${String(target.getMinutes()).padStart(2, '0')}`;
+  return sameDay
+    ? `lembrete às ${time}`
+    : `lembrete ${String(target.getDate()).padStart(2, '0')}/${String(target.getMonth() + 1).padStart(2, '0')} ${time}`;
 }
 
 function formatLongDate(iso: string): string {
