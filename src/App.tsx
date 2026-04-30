@@ -10,6 +10,7 @@ import { LoadingScreen } from '@/components/shell/LoadingScreen';
 import { Toaster, toast } from '@/components/shell/Toaster';
 import { CommandPalette } from '@/components/shell/CommandPalette';
 import { SmoothScroll } from '@/components/shell/SmoothScroll';
+import { EventBanner } from '@/components/shell/EventBanner';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Dashboard } from '@/pages/Dashboard';
 import { CRM } from '@/pages/CRM';
@@ -115,6 +116,7 @@ function App() {
 
           <CommandPalette active={active} onNavigate={setActive} />
           <Toaster />
+          <EventBanner />
           <SmoothScroll />
         </div>
       )}

@@ -7,7 +7,13 @@ import {
   pruneNotified,
   reminderTimeFor,
 } from '@/lib/notifications';
+import { bannerFromEvent } from '@/components/shell/EventBanner';
 import type { CalendarEvent } from '@/types';
+
+function bannerFor(event: CalendarEvent): void {
+  const clientName = useStore.getState().clients.find((c) => c.id === event.clientId)?.company;
+  bannerFromEvent(event, { client: clientName });
+}
 
 /**
  * Schedules browser notifications for upcoming events.
@@ -53,7 +59,11 @@ export function useEventReminders(): void {
         if (!fireAt) continue;
         if (now < fireAt) continue;
         if (now.getTime() - fireAt.getTime() > 30 * 60_000) continue;
-        if (fireEventNotification(event)) markNotified(event.id);
+        // Fire OS notification AND in-app banner — banner is the reliable
+        // fallback when OS-level notifications are blocked (Focus mode, etc).
+        fireEventNotification(event);
+        bannerFor(event);
+        markNotified(event.id);
       }
 
       // Schedule the next pending reminder precisely.

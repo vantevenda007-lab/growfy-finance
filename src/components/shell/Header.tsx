@@ -7,6 +7,7 @@ import {
   requestNotificationPermission,
   type NotificationPermissionState,
 } from '@/lib/notifications';
+import { useEventBanner } from './EventBanner';
 import { Logo } from './Logo';
 import { PeriodSelector } from './PeriodSelector';
 import { Button } from '@/components/ui/button';
@@ -279,18 +280,28 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
                       {permission === 'granted' && (
                         <button
                           onClick={() => {
-                            const ok = fireTestNotification();
-                            if (ok) {
-                              toast('Notificação de teste enviada', {
-                                description: 'Confira o canto da tela.',
-                                tone: 'success',
-                              });
-                            } else {
-                              toast('Falha ao enviar', {
-                                description: 'Verifique as permissões do navegador.',
-                                tone: 'error',
-                              });
-                            }
+                            const result = fireTestNotification();
+                            // Always show in-app banner as guaranteed feedback,
+                            // since the OS may block native notifications silently.
+                            const eventAt = new Date(Date.now() + 5 * 60_000).toISOString();
+                            useEventBanner.getState().push({
+                              title: 'Reunião de demonstração',
+                              body: result.delivered
+                                ? 'Banner interno + notificação nativa enviados.'
+                                : 'Banner interno OK · ' + (result.reason ?? ''),
+                              eventAt,
+                              tone: 'meeting',
+                              priority: 'high',
+                              location: 'Google Meet',
+                              client: 'Acme Studios',
+                            });
+                            toast('Teste disparado', {
+                              description: result.delivered
+                                ? 'Veja o banner à direita. Se a notificação do navegador não chegou, verifique System Settings → Notifications → Chrome.'
+                                : (result.reason ?? 'Banner interno disparado mesmo sem nativa.'),
+                              tone: result.delivered ? 'success' : 'info',
+                            });
+                            setProfileOpen(false);
                           }}
                           className="flex w-full items-center gap-2 px-2 py-1.5 -mx-1 rounded text-[11px] hover:bg-secondary/60 transition-colors"
                         >

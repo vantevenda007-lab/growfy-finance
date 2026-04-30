@@ -113,22 +113,41 @@ export const REMINDER_PRESETS: { label: string; value: number }[] = [
   { label: '1 dia antes', value: 1440 },
 ];
 
-/** Send a test notification so users can verify the system works. */
-export function fireTestNotification(): boolean {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+export interface NotificationDiagnostic {
+  delivered: boolean;
+  reason?: string;
+}
+
+/** Send a test notification with detailed diagnostic. */
+export function fireTestNotification(): NotificationDiagnostic {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    return { delivered: false, reason: 'API ausente neste navegador.' };
+  }
+  if (Notification.permission !== 'granted') {
+    return {
+      delivered: false,
+      reason: `Permissão = "${Notification.permission}". Permita pelo cadeado.`,
+    };
+  }
   try {
-    const n = new Notification('🚀 Growfy Finance', {
-      body: 'Notificações ativadas. Você será avisado dos seus compromissos.',
-      tag: 'growfy-test',
+    const n = new Notification('Growfy Finance — Teste', {
+      body: 'Se você vê isso, as notificações estão funcionando.',
+      tag: 'growfy-test-' + Date.now(),
       icon: '/favicon.svg',
+      requireInteraction: true, // persists until user dismisses
     });
     n.onclick = () => {
       window.focus();
       n.close();
     };
-    return true;
-  } catch {
-    return false;
+    // Native notifications don't reliably surface a "show" within a sync window
+    // on every OS, so we trust the constructor unless it threw.
+    return { delivered: true };
+  } catch (err) {
+    return {
+      delivered: false,
+      reason: 'Erro ao criar: ' + ((err as Error).message ?? String(err)),
+    };
   }
 }
 
