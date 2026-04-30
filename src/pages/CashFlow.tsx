@@ -22,13 +22,11 @@ import { sixMonthSeries, summarizeMonth, timelineForMonth } from '@/lib/selector
 import { cn } from '@/lib/utils';
 
 export function CashFlow() {
-  const {
-    selectedMonth,
-    receivables,
-    payables,
-    cashflowNotesByMonth,
-    setCashflowNote,
-  } = useStore();
+  const selectedMonth = useStore((s) => s.selectedMonth);
+  const receivables = useStore((s) => s.receivables);
+  const payables = useStore((s) => s.payables);
+  const cashflowNotesByMonth = useStore((s) => s.cashflowNotesByMonth);
+  const setCashflowNote = useStore((s) => s.setCashflowNote);
 
   const summary = useMemo(
     () => summarizeMonth(selectedMonth, receivables, payables),
