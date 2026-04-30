@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  CalendarDays,
   LayoutDashboard,
   Moon,
   RotateCcw,
@@ -68,9 +69,10 @@ export function CommandPalette({ active, onNavigate }: CommandPaletteProps) {
     const navCommands: Command[] = [
       { id: 'nav-dashboard', label: 'Ir para Dashboard', icon: LayoutDashboard, group: 'Navegação', hint: 'D', run: () => onNavigate('dashboard') },
       { id: 'nav-crm', label: 'Ir para CRM', icon: Users, group: 'Navegação', hint: 'C', run: () => onNavigate('crm') },
-      { id: 'nav-rec', label: 'Ir para Contas a Receber', icon: ArrowDownToLine, group: 'Navegação', hint: 'R', run: () => onNavigate('receivables') },
-      { id: 'nav-pay', label: 'Ir para Contas a Pagar', icon: ArrowUpFromLine, group: 'Navegação', hint: 'P', run: () => onNavigate('payables') },
-      { id: 'nav-flow', label: 'Ir para Fluxo de Caixa', icon: Waves, group: 'Navegação', hint: 'F', run: () => onNavigate('cashflow') },
+      { id: 'nav-calendar', label: 'Ir para Agenda', icon: CalendarDays, group: 'Navegação', hint: 'A', run: () => onNavigate('calendar') },
+      { id: 'nav-receivables', label: 'Ir para Contas a Receber', icon: ArrowDownToLine, group: 'Navegação', hint: 'R', run: () => onNavigate('receivables') },
+      { id: 'nav-payables', label: 'Ir para Contas a Pagar', icon: ArrowUpFromLine, group: 'Navegação', hint: 'P', run: () => onNavigate('payables') },
+      { id: 'nav-cashflow', label: 'Ir para Fluxo de Caixa', icon: Waves, group: 'Navegação', hint: 'F', run: () => onNavigate('cashflow') },
     ].filter((c) => !c.id.endsWith(active));
 
     const actions: Command[] = [

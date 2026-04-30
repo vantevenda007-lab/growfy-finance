@@ -13,6 +13,7 @@ import type { TabKey } from './SidebarNav';
 const TAB_BREADCRUMB: Record<TabKey, string> = {
   dashboard: 'Dashboard',
   crm: 'CRM · Pipeline',
+  calendar: 'Agenda',
   receivables: 'A Receber',
   payables: 'A Pagar',
   cashflow: 'Fluxo de Caixa',

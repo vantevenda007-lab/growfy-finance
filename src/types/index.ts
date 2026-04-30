@@ -73,6 +73,25 @@ export interface Payable {
   createdAt: string;
 }
 
+export type CalendarEventType = 'meeting' | 'task' | 'reminder' | 'deadline' | 'milestone';
+export type CalendarEventPriority = 'low' | 'medium' | 'high';
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;          // ISO yyyy-mm-dd
+  startTime?: string;    // HH:mm (24h)
+  endTime?: string;      // HH:mm
+  allDay: boolean;
+  type: CalendarEventType;
+  priority: CalendarEventPriority;
+  location?: string;
+  clientId?: string;
+  completed: boolean;
+  createdAt: string;
+}
+
 export type Theme = 'dark' | 'light';
 export type PeriodGrain = 'day' | 'week' | 'month' | 'year';
 

@@ -13,6 +13,7 @@ import { SmoothScroll } from '@/components/shell/SmoothScroll';
 import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Dashboard } from '@/pages/Dashboard';
 import { CRM } from '@/pages/CRM';
+import { Calendar } from '@/pages/Calendar';
 import { Receivables } from '@/pages/Receivables';
 import { Payables } from '@/pages/Payables';
 import { CashFlow } from '@/pages/CashFlow';
@@ -100,6 +101,7 @@ function App() {
                 >
                   {active === 'dashboard' && <Dashboard />}
                   {active === 'crm' && <CRM />}
+                  {active === 'calendar' && <Calendar />}
                   {active === 'receivables' && <Receivables />}
                   {active === 'payables' && <Payables />}
                   {active === 'cashflow' && <CashFlow />}

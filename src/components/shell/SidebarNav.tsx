@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  CalendarDays,
   LayoutDashboard,
   Users,
   Waves,
@@ -9,14 +10,15 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type TabKey = 'dashboard' | 'crm' | 'receivables' | 'payables' | 'cashflow';
+export type TabKey = 'dashboard' | 'crm' | 'calendar' | 'receivables' | 'payables' | 'cashflow';
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon; sub: string; shortcut: string }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, sub: 'Visão geral', shortcut: '1' },
   { key: 'crm', label: 'CRM', icon: Users, sub: 'Clientes', shortcut: '2' },
-  { key: 'receivables', label: 'A Receber', icon: ArrowDownToLine, sub: 'Entradas', shortcut: '3' },
-  { key: 'payables', label: 'A Pagar', icon: ArrowUpFromLine, sub: 'Saídas', shortcut: '4' },
-  { key: 'cashflow', label: 'Fluxo', icon: Waves, sub: 'Consolidado', shortcut: '5' },
+  { key: 'calendar', label: 'Agenda', icon: CalendarDays, sub: 'Compromissos', shortcut: '3' },
+  { key: 'receivables', label: 'A Receber', icon: ArrowDownToLine, sub: 'Entradas', shortcut: '4' },
+  { key: 'payables', label: 'A Pagar', icon: ArrowUpFromLine, sub: 'Saídas', shortcut: '5' },
+  { key: 'cashflow', label: 'Fluxo', icon: Waves, sub: 'Consolidado', shortcut: '6' },
 ];
 
 interface SidebarNavProps {

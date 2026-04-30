@@ -1,14 +1,15 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import type { AppMeta, Client, Payable, Receivable } from '@/types';
+import type { AppMeta, CalendarEvent, Client, Payable, Receivable } from '@/types';
 
 const DB_NAME = 'agencyfinance';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface AFSchema {
   clients: Client;
   receivables: Receivable;
   payables: Payable;
   meta: AppMeta;
+  events: CalendarEvent;
 }
 
 let dbPromise: Promise<IDBPDatabase<AFSchema>> | null = null;
@@ -28,6 +29,9 @@ function getDb(): Promise<IDBPDatabase<AFSchema>> {
         }
         if (!db.objectStoreNames.contains('meta')) {
           db.createObjectStore('meta', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('events')) {
+          db.createObjectStore('events', { keyPath: 'id' });
         }
       },
     });
@@ -65,45 +69,50 @@ export const db = {
 };
 
 export interface BackupBundle {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   exportedAt: string;
   clients: Client[];
   receivables: Receivable[];
   payables: Payable[];
+  events?: CalendarEvent[];
   meta: AppMeta | null;
 }
 
 export async function exportBackup(): Promise<BackupBundle> {
-  const [clients, receivables, payables, metaRows] = await Promise.all([
+  const [clients, receivables, payables, events, metaRows] = await Promise.all([
     db.all('clients'),
     db.all('receivables'),
     db.all('payables'),
+    db.all('events'),
     db.all('meta'),
   ]);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: new Date().toISOString(),
     clients,
     receivables,
     payables,
+    events,
     meta: metaRows[0] ?? null,
   };
 }
 
 export async function importBackup(bundle: BackupBundle): Promise<void> {
-  if (bundle.schemaVersion !== 1) {
+  if (bundle.schemaVersion !== 1 && bundle.schemaVersion !== 2) {
     throw new Error(`Versão de schema não suportada: ${bundle.schemaVersion}`);
   }
   await Promise.all([
     db.clear('clients'),
     db.clear('receivables'),
     db.clear('payables'),
+    db.clear('events'),
     db.clear('meta'),
   ]);
   await Promise.all([
     db.putMany('clients', bundle.clients),
     db.putMany('receivables', bundle.receivables),
     db.putMany('payables', bundle.payables),
+    bundle.events ? db.putMany('events', bundle.events) : Promise.resolve(),
     bundle.meta ? db.put('meta', bundle.meta) : Promise.resolve(),
   ]);
 }

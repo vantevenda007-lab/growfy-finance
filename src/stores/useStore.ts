@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import { db } from '@/lib/db';
 import { currentMonthKey } from '@/lib/format';
-import type { AppMeta, Client, Payable, PeriodGrain, Receivable, Theme } from '@/types';
+import type {
+  AppMeta,
+  CalendarEvent,
+  Client,
+  Payable,
+  PeriodGrain,
+  Receivable,
+  Theme,
+} from '@/types';
 
 const SEED_CLEARED_FLAG = 'growfy.cleared.seed.v1';
 
@@ -10,6 +18,7 @@ interface AppState {
   clients: Client[];
   receivables: Receivable[];
   payables: Payable[];
+  events: CalendarEvent[];
 
   // UI state
   theme: Theme;
@@ -35,11 +44,14 @@ interface AppState {
   upsertPayable: (p: Payable) => Promise<void>;
   removePayable: (id: string) => Promise<void>;
 
+  upsertEvent: (e: CalendarEvent) => Promise<void>;
+  removeEvent: (id: string) => Promise<void>;
+
   setCashflowNote: (month: string, note: string) => Promise<void>;
   addCustomCategory: (label: string) => Promise<void>;
 
   resetSeed: () => Promise<void>;
-  replaceAll: (data: { clients: Client[]; receivables: Receivable[]; payables: Payable[]; meta: AppMeta | null }) => Promise<void>;
+  replaceAll: (data: { clients: Client[]; receivables: Receivable[]; payables: Payable[]; events: CalendarEvent[]; meta: AppMeta | null }) => Promise<void>;
 }
 
 const META_ID = 'singleton' as const;
@@ -71,6 +83,7 @@ export const useStore = create<AppState>((set, get) => ({
   clients: [],
   receivables: [],
   payables: [],
+  events: [],
   theme: 'dark',
   selectedMonth: currentMonthKey(),
   periodGrain: 'month',
@@ -89,14 +102,16 @@ export const useStore = create<AppState>((set, get) => ({
           db.clear('clients'),
           db.clear('receivables'),
           db.clear('payables'),
+          db.clear('events'),
         ]);
         localStorage.setItem(SEED_CLEARED_FLAG, new Date().toISOString());
       }
 
-      const [clients, receivables, payables, metaRows] = await Promise.all([
+      const [clients, receivables, payables, events, metaRows] = await Promise.all([
         db.all('clients'),
         db.all('receivables'),
         db.all('payables'),
+        db.all('events'),
         db.all('meta'),
       ]);
 
@@ -111,6 +126,7 @@ export const useStore = create<AppState>((set, get) => ({
         clients,
         receivables,
         payables,
+        events,
         theme: resolvedMeta.theme,
         selectedMonth: resolvedMeta.selectedMonth,
         cashflowNotesByMonth: resolvedMeta.cashflowNotesByMonth ?? {},
@@ -186,6 +202,21 @@ export const useStore = create<AppState>((set, get) => ({
     set({ payables: get().payables.filter((p) => p.id !== id) });
   },
 
+  upsertEvent: async (e) => {
+    await db.put('events', e);
+    const exists = get().events.some((x) => x.id === e.id);
+    set({
+      events: exists
+        ? get().events.map((x) => (x.id === e.id ? e : x))
+        : [...get().events, e],
+    });
+  },
+
+  removeEvent: async (id) => {
+    await db.delete('events', id);
+    set({ events: get().events.filter((e) => e.id !== id) });
+  },
+
   setCashflowNote: async (month, note) => {
     const cashflowNotesByMonth = { ...get().cashflowNotesByMonth, [month]: note };
     set({ cashflowNotesByMonth });
@@ -204,6 +235,7 @@ export const useStore = create<AppState>((set, get) => ({
       db.clear('clients'),
       db.clear('receivables'),
       db.clear('payables'),
+      db.clear('events'),
       db.clear('meta'),
     ]);
     await db.put('meta', defaultMeta());
@@ -211,23 +243,26 @@ export const useStore = create<AppState>((set, get) => ({
       clients: [],
       receivables: [],
       payables: [],
+      events: [],
       cashflowNotesByMonth: {},
       customExpenseCategories: [],
       selectedMonth: currentMonthKey(),
     });
   },
 
-  replaceAll: async ({ clients, receivables, payables, meta }) => {
+  replaceAll: async ({ clients, receivables, payables, events, meta }) => {
     await Promise.all([
       db.clear('clients'),
       db.clear('receivables'),
       db.clear('payables'),
+      db.clear('events'),
       db.clear('meta'),
     ]);
     await Promise.all([
       db.putMany('clients', clients),
       db.putMany('receivables', receivables),
       db.putMany('payables', payables),
+      db.putMany('events', events),
       db.put('meta', meta ?? defaultMeta()),
     ]);
     const resolved = meta ?? defaultMeta();
@@ -235,6 +270,7 @@ export const useStore = create<AppState>((set, get) => ({
       clients,
       receivables,
       payables,
+      events,
       theme: resolved.theme,
       selectedMonth: resolved.selectedMonth,
       cashflowNotesByMonth: resolved.cashflowNotesByMonth ?? {},
