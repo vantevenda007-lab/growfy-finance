@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { uid } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { playNotificationSound, vibrate } from '@/lib/notifications';
 import type { CalendarEvent } from '@/types';
 
 type Tone = 'meeting' | 'task' | 'reminder' | 'deadline' | 'milestone' | 'test';
@@ -48,6 +49,14 @@ export const useEventBanner = create<BannerState>((set, get) => ({
   push: (item) => {
     const id = uid('banner');
     set({ items: [...get().items, { id, ...item }] });
+    // Always play sound + vibrate for a real notification feel — works on mobile
+    // even when the OS Notification API is not available.
+    if (item.tone !== 'test') {
+      playNotificationSound();
+      vibrate([100, 50, 100]);
+    } else {
+      playNotificationSound(0.12);
+    }
     return id;
   },
   dismiss: (id) => set({ items: get().items.filter((i) => i.id !== id) }),

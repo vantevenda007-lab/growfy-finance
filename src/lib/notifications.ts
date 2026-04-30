@@ -4,6 +4,82 @@ export type NotificationPermissionState = 'default' | 'granted' | 'denied' | 'un
 
 const NOTIFIED_KEY = 'growfy.notified.events.v1';
 
+export interface PlatformInfo {
+  isIOS: boolean;
+  isAndroid: boolean;
+  isMobile: boolean;
+  isStandalone: boolean; // running as installed PWA
+  supportsNotificationAPI: boolean;
+  /** True when the OS notification path is realistically usable. */
+  canUseOSNotifications: boolean;
+}
+
+export function detectPlatform(): PlatformInfo {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return {
+      isIOS: false,
+      isAndroid: false,
+      isMobile: false,
+      isStandalone: false,
+      supportsNotificationAPI: false,
+      canUseOSNotifications: false,
+    };
+  }
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  const isMobile = isIOS || isAndroid;
+  const isStandalone =
+    window.matchMedia?.('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const supportsNotificationAPI = 'Notification' in window;
+  // iOS only allows notifications when launched as installed PWA (16.4+).
+  const canUseOSNotifications = supportsNotificationAPI && (!isIOS || isStandalone);
+  return { isIOS, isAndroid, isMobile, isStandalone, supportsNotificationAPI, canUseOSNotifications };
+}
+
+/** Trigger device vibration if supported (Android, mostly). Silent on iOS. */
+export function vibrate(pattern: number | number[] = [80, 40, 80]): boolean {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      return navigator.vibrate(pattern);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/** Play a short Web Audio "ding" — works on desktop and mobile (after first user gesture). */
+export function playNotificationSound(volume = 0.18): void {
+  try {
+    const Ctx = (window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext);
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    const tones = [
+      { freq: 880, start: 0, dur: 0.12 },
+      { freq: 1320, start: 0.1, dur: 0.18 },
+    ];
+    for (const t of tones) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = t.freq;
+      gain.gain.setValueAtTime(0, now + t.start);
+      gain.gain.linearRampToValueAtTime(volume, now + t.start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + t.start + t.dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + t.start);
+      osc.stop(now + t.start + t.dur);
+    }
+    // Auto-close context after sound finishes
+    window.setTimeout(() => ctx.close().catch(() => undefined), 600);
+  } catch {
+    // Audio context creation can fail before a user gesture — silent fallback.
+  }
+}
+
 /** Returns the browser's current Notification permission, or 'unsupported' if API missing. */
 export function getNotificationPermission(): NotificationPermissionState {
   if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';

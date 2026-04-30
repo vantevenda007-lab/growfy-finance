@@ -2,6 +2,7 @@ import { Bell, BellOff, BellRing, Command, Download, LogOut, Moon, RotateCcw, Se
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  detectPlatform,
   fireTestNotification,
   getNotificationPermission,
   requestNotificationPermission,
@@ -46,6 +47,7 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
   const [permission, setPermission] = useState<NotificationPermissionState>(() =>
     getNotificationPermission(),
   );
+  const platform = useMemo(() => detectPlatform(), []);
 
   async function onToggleNotifications(): Promise<void> {
     if (permission === 'unsupported') {
@@ -333,6 +335,30 @@ export function Header({ active, userEmail, onSignOut }: HeaderProps) {
                           Bloqueado pelo navegador. Clique no cadeado da barra → Notificações → Permitir → recarregue a página.
                         </p>
                       )}
+
+                      {/* Mobile-specific guidance */}
+                      {platform.isIOS && !platform.isStandalone && (
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          <strong className="text-foreground">iPhone/iPad:</strong> Safari mobile não permite notificações em abas comuns.
+                          Tap no botão <strong className="text-foreground">Compartilhar</strong> →
+                          <strong className="text-foreground"> Adicionar à Tela de Início</strong> e abra pelo ícone.
+                        </p>
+                      )}
+                      {platform.isStandalone && permission === 'default' && (
+                        <p className="text-[10px] text-accent leading-relaxed">
+                          ✓ App instalado · ative as notificações tocando no botão acima.
+                        </p>
+                      )}
+                      {platform.isAndroid && permission === 'denied' && (
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          <strong className="text-foreground">Android:</strong> abra Configurações do site no menu do Chrome → Notificações → Permitir.
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground/70 leading-relaxed pt-1 border-t border-border/40">
+                        {platform.isMobile
+                          ? 'Mesmo sem nativas, o banner interno toca som + vibra enquanto o app está aberto.'
+                          : 'Banner interno funciona como fallback se as nativas falharem.'}
+                      </p>
                     </div>
 
                     <button
