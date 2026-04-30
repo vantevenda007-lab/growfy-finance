@@ -137,14 +137,6 @@ function monthKeyFrom(value: string): string {
   return currentMonthKey();
 }
 
-function parseStatus<T extends string>(value: string, allowed: readonly T[], fallback: T): T {
-  const norm = normalize(value);
-  for (const a of allowed) {
-    if (normalize(a) === norm) return a;
-  }
-  return fallback;
-}
-
 function parseClientStatus(value: string): ClientStatus {
   const n = normalize(value);
   if (['ativo', 'active'].includes(n)) return 'active';
